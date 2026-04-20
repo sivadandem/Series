@@ -1,0 +1,1451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pandas Series — Complete Cheatsheet</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Space+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #0a0a0a;
+    --bg2:      #111111;
+    --bg3:      #181818;
+    --bg4:      #222222;
+    --border:   #2a2a2a;
+    --border2:  #383838;
+    --text:     #e8e8e8;
+    --muted:    #888888;
+    --hint:     #555555;
+    --mono:     'JetBrains Mono', monospace;
+    --sans:     'Space Grotesk', sans-serif;
+
+    --purple:   #a78bfa;
+    --purple-bg:#1e1730;
+    --purple-dim:#7c5ddb;
+
+    --teal:     #34d399;
+    --teal-bg:  #0d2419;
+    --teal-dim: #22a076;
+
+    --amber:    #fbbf24;
+    --amber-bg: #231a07;
+    --amber-dim:#c99a10;
+
+    --coral:    #fb7185;
+    --coral-bg: #230d12;
+    --coral-dim:#d04a61;
+
+    --blue:     #60a5fa;
+    --blue-bg:  #0d1a2e;
+    --blue-dim: #3b82c4;
+
+    --green:    #86efac;
+    --green-bg: #0c2018;
+    --green-dim:#4ade80;
+
+    --pink:     #f472b6;
+    --pink-bg:  #22102b;
+    --pink-dim: #c026a3;
+
+    --red:      #f87171;
+    --red-bg:   #220d0d;
+    --red-dim:  #dc2626;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg2); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  /* ─── KEYFRAMES ─── */
+  @keyframes fadeUp   { from { opacity:0; transform:translateY(20px) } to { opacity:1; transform:translateY(0) } }
+  @keyframes fadeIn   { from { opacity:0 } to { opacity:1 } }
+  @keyframes slideIn  { from { opacity:0; transform:translateX(-16px) } to { opacity:1; transform:translateX(0) } }
+  @keyframes pop      { 0%{transform:scale(.9);opacity:0} 60%{transform:scale(1.04)} 100%{transform:scale(1);opacity:1} }
+  @keyframes barGrow  { from { width:0 } to { width: var(--w) } }
+  @keyframes scanline { 0%{transform:translateY(-100%)} 100%{transform:translateY(100vh)} }
+  @keyframes blink    { 0%,100%{opacity:1} 50%{opacity:0} }
+  @keyframes glow     { 0%,100%{text-shadow:0 0 8px currentColor} 50%{text-shadow:0 0 20px currentColor,0 0 40px currentColor} }
+  @keyframes borderPulse { 0%,100%{border-color:var(--border)} 50%{border-color:var(--border2)} }
+
+  /* ─── LAYOUT ─── */
+  .page { max-width: 920px; margin: 0 auto; padding: 2rem 1.25rem 5rem; }
+
+  /* ─── HERO ─── */
+  .hero {
+    text-align: center;
+    padding: 3.5rem 1rem 2.5rem;
+    position: relative;
+    animation: fadeUp .7s ease both;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 50%; transform: translateX(-50%);
+    width: 1px; height: 60px;
+    background: linear-gradient(to bottom, transparent, var(--purple));
+  }
+  .hero-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--purple);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    animation: glow 3s ease-in-out infinite;
+  }
+  .hero-title {
+    font-size: clamp(28px, 5vw, 42px);
+    font-weight: 600;
+    letter-spacing: -1px;
+    color: var(--text);
+    margin-bottom: .5rem;
+  }
+  .hero-title span { color: var(--purple); }
+  .hero-sub {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 1.5rem;
+  }
+  .pills {
+    display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
+    margin-bottom: 2rem;
+  }
+  .pill {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .5px;
+    border: 1px solid;
+    cursor: default;
+    transition: transform .15s;
+  }
+  .pill:hover { transform: translateY(-2px); }
+
+  /* ─── NAV STRIP ─── */
+  .nav-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 6px;
+    margin-bottom: 2.5rem;
+    animation: fadeUp .5s .15s ease both;
+    opacity: 0;
+    animation-fill-mode: forwards;
+  }
+  .nav-btn {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 11px;
+    font-size: 11px;
+    font-family: var(--sans);
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+    transition: background .15s, border-color .15s, transform .12s;
+  }
+  .nav-btn:hover { background: var(--bg3); border-color: var(--border2); transform: translateY(-2px); }
+  .nav-btn .nb-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 20px; height: 20px; border-radius: 50%;
+    font-size: 9px; font-weight: 600; margin-right: 5px;
+    font-family: var(--mono);
+  }
+  .nav-btn .nb-sub { display: block; font-size: 9px; color: var(--muted); margin-top: 2px; padding-left: 25px; }
+
+  /* ─── SECTIONS ─── */
+  .section {
+    margin-bottom: 1.8rem;
+    opacity: 0;
+    animation: fadeUp .5s ease both;
+    animation-play-state: paused;
+  }
+  .section.visible { animation-play-state: running; }
+
+  .sec-head {
+    display: flex; align-items: center; gap: 10px;
+    padding: 11px 15px;
+    border-radius: 10px 10px 0 0;
+    border: 1px solid;
+    border-bottom: none;
+  }
+  .sec-num {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 10px; font-weight: 600;
+    flex-shrink: 0;
+  }
+  .sec-title { font-size: 13px; font-weight: 600; }
+  .sec-tag {
+    margin-left: auto; font-family: var(--mono);
+    font-size: 9px; letter-spacing: .5px;
+    padding: 2px 8px; border-radius: 10px;
+  }
+
+  .sec-body {
+    border: 1px solid;
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    overflow: hidden;
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: 1px solid var(--border);
+  }
+  .row:last-child { border-bottom: none; }
+  .row.full { grid-template-columns: 1fr; }
+  .row.three { grid-template-columns: 1fr 1fr 1fr; }
+
+  .cell {
+    padding: 12px 15px;
+    border-right: 1px solid var(--border);
+  }
+  .cell:last-child { border-right: none; }
+
+  .clabel {
+    font-family: var(--mono);
+    font-size: 9px; letter-spacing: .8px;
+    color: var(--hint);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+
+  /* ─── CODE ─── */
+  pre {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    line-height: 1.85;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .kw  { color: var(--purple); }
+  .fn  { color: var(--teal); }
+  .str { color: var(--amber); }
+  .cm  { color: var(--hint); font-style: italic; }
+  .num { color: var(--blue); }
+
+  /* ─── UTILS ─── */
+  .note {
+    font-size: 11px; color: var(--muted);
+    line-height: 1.6; margin-top: 5px;
+    border-left: 2px solid var(--border2);
+    padding-left: 8px;
+  }
+
+  .tag {
+    display: inline-block;
+    font-size: 9px; padding: 2px 7px;
+    border-radius: 10px; font-weight: 500;
+    margin: 2px 2px 0 0;
+    font-family: var(--mono);
+    letter-spacing: .3px;
+  }
+
+  .alt {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 8px 11px;
+    margin-top: 7px;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .alt b { color: var(--text); font-weight: 600; }
+
+  /* ─── LIVE DEMO ─── */
+  .live-demo {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-top: 8px;
+  }
+  .live-title {
+    font-family: var(--mono);
+    font-size: 9px; color: var(--hint);
+    letter-spacing: .5px; text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  /* ─── BARS ─── */
+  .bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+  .bar-label { font-family: var(--mono); font-size: 10px; color: var(--muted); width: 28px; text-align: right; flex-shrink: 0; }
+  .bar-track { flex: 1; height: 12px; border-radius: 3px; background: var(--border); overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 3px; transition: width .4s cubic-bezier(.4,0,.2,1); }
+  .bar-val { font-family: var(--mono); font-size: 10px; font-weight: 600; color: var(--text); width: 32px; }
+
+  /* ─── TABLE ─── */
+  .mini-table { width: 100%; font-size: 11px; border-collapse: collapse; }
+  .mini-table th {
+    font-family: var(--mono); font-size: 9px; letter-spacing: .6px;
+    color: var(--hint); text-transform: uppercase; padding: 4px 8px;
+    text-align: left; border-bottom: 1px solid var(--border); font-weight: 500;
+  }
+  .mini-table td { padding: 5px 8px; border-bottom: 1px solid var(--border); color: var(--text); }
+  .mini-table tr:last-child td { border-bottom: none; }
+  .mini-table .muted { color: var(--muted); font-size: 10px; }
+  .mini-table td:first-child { font-family: var(--mono); font-size: 10px; }
+
+  /* ─── SERIES VIS ─── */
+  .series-vis {
+    display: flex; border: 1px solid var(--border);
+    border-radius: 6px; overflow: hidden; margin-top: 9px;
+  }
+  .sv-cell {
+    flex: 1; text-align: center; padding: 7px 4px;
+    border-right: 1px solid var(--border);
+    animation: pop .4s ease both;
+    transition: background .2s;
+  }
+  .sv-cell:last-child { border-right: none; }
+  .sv-cell:hover { background: var(--bg4); }
+  .sv-idx { font-family: var(--mono); font-size: 9px; color: var(--hint); margin-bottom: 3px; }
+  .sv-val { font-family: var(--mono); font-size: 14px; font-weight: 600; color: var(--teal); }
+
+  /* ─── FILTER CHIPS ─── */
+  .filter-vis { display: flex; gap: 5px; margin-top: 9px; flex-wrap: wrap; }
+  .fv-chip {
+    padding: 4px 10px; border-radius: 5px;
+    font-family: var(--mono); font-size: 11px; font-weight: 600;
+    transition: opacity .3s, transform .25s;
+    border: 1px solid transparent;
+  }
+  .fv-chip.hidden { opacity: .2; transform: scale(.88); }
+
+  /* ─── INTERACTIVE ─── */
+  .interactive-row {
+    display: flex; align-items: center; gap: 10px;
+    flex-wrap: wrap; margin-top: 9px;
+  }
+  .interactive-row label { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+  .interactive-row input[type=range] {
+    -webkit-appearance: none;
+    width: 120px; height: 4px;
+    border-radius: 2px; background: var(--border2); outline: none;
+    cursor: pointer;
+  }
+  .interactive-row input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--purple); cursor: pointer;
+    transition: transform .15s;
+  }
+  .interactive-row input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+  .interactive-row span {
+    font-family: var(--mono); font-size: 11px; font-weight: 600;
+    color: var(--purple); min-width: 30px;
+  }
+
+  /* ─── SEARCH ─── */
+  .search-bar { display: flex; gap: 8px; margin-top: 10px; }
+  .search-bar input {
+    flex: 1; font-size: 12px; font-family: var(--mono);
+    padding: 7px 11px;
+    border: 1px solid var(--border2);
+    border-radius: 7px;
+    background: var(--bg3);
+    color: var(--text);
+    outline: none;
+    transition: border-color .2s;
+  }
+  .search-bar input:focus { border-color: var(--purple); }
+  .search-bar input::placeholder { color: var(--hint); }
+
+  /* ─── INFO/WARN BOXES ─── */
+  .info-box { background: var(--blue-bg); border: 1px solid var(--blue-dim); border-radius: 7px; padding: 8px 11px; margin-top: 7px; }
+  .info-box p { font-size: 11px; color: var(--blue); line-height: 1.6; }
+  .warn-box { background: var(--amber-bg); border: 1px solid var(--amber-dim); border-radius: 7px; padding: 8px 11px; margin-top: 7px; }
+  .warn-box p { font-size: 11px; color: var(--amber); line-height: 1.6; }
+
+  /* ─── PROP RESULT ─── */
+  #prop-result {
+    font-size: 11px; color: var(--muted);
+    padding: 8px 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    min-height: 44px;
+    transition: border-color .3s;
+    font-family: var(--mono);
+  }
+
+  /* ─── PROP BUTTONS ─── */
+  .prop-btn {
+    font-family: var(--mono); font-size: 10px;
+    padding: 4px 9px; border-radius: 5px;
+    border: 1px solid var(--border2);
+    background: var(--bg); color: var(--teal);
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+  }
+  .prop-btn:hover { background: var(--bg4); border-color: var(--teal-dim); }
+
+  /* ─── CUMSUM VIS ─── */
+  .cumsum-step {
+    text-align: center;
+  }
+  .cumsum-step .cs-num {
+    font-family: var(--mono); font-size: 13px; font-weight: 600;
+    color: var(--coral); background: var(--coral-bg);
+    border: 1px solid var(--coral-dim);
+    border-radius: 5px; padding: 4px 8px;
+    display: inline-block;
+    animation: pop .4s ease both;
+  }
+  .cumsum-step .cs-lbl {
+    font-family: var(--mono); font-size: 9px; color: var(--hint); margin-bottom: 4px;
+  }
+  .cs-arrow { font-family: var(--mono); font-size: 11px; color: var(--hint); display: flex; align-items: center; }
+
+  /* ─── NO RESULTS ─── */
+  #no-results { display: none; text-align: center; padding: 20px; font-size: 12px; color: var(--muted); font-family: var(--mono); }
+
+  /* ─── DIVIDER ─── */
+  .divider { height: 1px; background: var(--border); margin: 2rem 0; }
+
+  /* ─── FOOTER ─── */
+  .footer {
+    text-align: center; padding: 2rem 0 1rem;
+    font-family: var(--mono); font-size: 10px;
+    color: var(--hint); letter-spacing: 1px;
+  }
+
+  /* ─── SCANLINE EFFECT ─── */
+  body::after {
+    content: '';
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,.03) 2px,
+      rgba(0,0,0,.03) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* ─── SCROLLTOP ─── */
+  #scrolltop {
+    position: fixed; bottom: 24px; right: 24px;
+    width: 38px; height: 38px;
+    background: var(--bg3); border: 1px solid var(--border2);
+    border-radius: 8px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; color: var(--purple);
+    opacity: 0; transition: opacity .3s, transform .2s;
+    font-family: var(--mono);
+    z-index: 100;
+  }
+  #scrolltop.visible { opacity: 1; }
+  #scrolltop:hover { transform: translateY(-2px); }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 600px) {
+    .row { grid-template-columns: 1fr; }
+    .row.three { grid-template-columns: 1fr; }
+    .cell { border-right: none; border-bottom: 1px solid var(--border); }
+    .cell:last-child { border-bottom: none; }
+    .nav-strip { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-eyebrow">pandas · series · complete reference</div>
+    <h1 class="hero-title">Pandas <span>Series</span><br>Cheatsheet</h1>
+    <p class="hero-sub">Every method · explained · with alternatives · animated &amp; interactive</p>
+    <div class="pills">
+      <span class="pill" style="color:var(--purple);border-color:var(--purple-dim);background:var(--purple-bg)">Create</span>
+      <span class="pill" style="color:var(--teal);border-color:var(--teal-dim);background:var(--teal-bg)">Access</span>
+      <span class="pill" style="color:var(--blue);border-color:var(--blue-dim);background:var(--blue-bg)">Math</span>
+      <span class="pill" style="color:var(--red);border-color:var(--red-dim);background:var(--red-bg)">Missing</span>
+      <span class="pill" style="color:var(--pink);border-color:var(--pink-dim);background:var(--pink-bg)">Strings</span>
+      <span class="pill" style="color:var(--amber);border-color:var(--amber-dim);background:var(--amber-bg)">DateTime</span>
+      <span class="pill" style="color:var(--green);border-color:var(--green-dim);background:var(--green-bg)">Stats</span>
+      <span class="pill" style="color:var(--coral);border-color:var(--coral-dim);background:var(--coral-bg)">Rolling</span>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <div class="nav-strip">
+    <button class="nav-btn" onclick="goTo('s1')"><span class="nb-num" style="background:var(--purple-bg);color:var(--purple)">1</span>Create<span class="nb-sub">list, dict, scalar</span></button>
+    <button class="nav-btn" onclick="goTo('s2')"><span class="nb-num" style="background:var(--teal-bg);color:var(--teal)">2</span>Properties<span class="nb-sub">shape, dtype, size</span></button>
+    <button class="nav-btn" onclick="goTo('s3')"><span class="nb-num" style="background:var(--blue-bg);color:var(--blue)">3</span>Access<span class="nb-sub">label, iloc, bool</span></button>
+    <button class="nav-btn" onclick="goTo('s4')"><span class="nb-num" style="background:var(--green-bg);color:var(--green)">4</span>Math<span class="nb-sub">ops &amp; aggregates</span></button>
+    <button class="nav-btn" onclick="goTo('s5')"><span class="nb-num" style="background:var(--red-bg);color:var(--red)">5</span>Missing<span class="nb-sub">NaN handling</span></button>
+    <button class="nav-btn" onclick="goTo('s6')"><span class="nb-num" style="background:var(--pink-bg);color:var(--pink)">6</span>Strings<span class="nb-sub">.str accessor</span></button>
+    <button class="nav-btn" onclick="goTo('s7')"><span class="nb-num" style="background:var(--amber-bg);color:var(--amber)">7</span>DateTime<span class="nb-sub">.dt accessor</span></button>
+    <button class="nav-btn" onclick="goTo('s8')"><span class="nb-num" style="background:var(--green-bg);color:var(--green)">8</span>Stats<span class="nb-sub">describe, skew</span></button>
+    <button class="nav-btn" onclick="goTo('s9')"><span class="nb-num" style="background:var(--purple-bg);color:var(--purple)">9</span>Counts<span class="nb-sub">unique, nunique</span></button>
+    <button class="nav-btn" onclick="goTo('s10')"><span class="nb-num" style="background:var(--coral-bg);color:var(--coral)">10</span>Rank<span class="nb-sub">cumsum, rank</span></button>
+    <button class="nav-btn" onclick="goTo('s11')"><span class="nb-num" style="background:var(--blue-bg);color:var(--blue)">11</span>Rolling<span class="nb-sub">window ops</span></button>
+    <button class="nav-btn" onclick="goTo('s12')"><span class="nb-num" style="background:var(--teal-bg);color:var(--teal)">12</span>Filter<span class="nb-sub">where, clip, isin</span></button>
+    <button class="nav-btn" onclick="goTo('s13')"><span class="nb-num" style="background:var(--amber-bg);color:var(--amber)">13</span>Map<span class="nb-sub">map, replace, apply</span></button>
+    <button class="nav-btn" onclick="goTo('s14')"><span class="nb-num" style="background:var(--red-bg);color:var(--red)">14</span>Dupes<span class="nb-sub">duplicated, drop</span></button>
+    <button class="nav-btn" onclick="goTo('s15')"><span class="nb-num" style="background:var(--pink-bg);color:var(--pink)">15</span>Shift<span class="nb-sub">diff, pct_change</span></button>
+    <button class="nav-btn" onclick="goTo('s16')"><span class="nb-num" style="background:var(--purple-bg);color:var(--purple)">16</span>Index<span class="nb-sub">reset, rename</span></button>
+    <button class="nav-btn" onclick="goTo('s17')"><span class="nb-num" style="background:var(--green-bg);color:var(--green)">17</span>Sort<span class="nb-sub">values, index</span></button>
+    <button class="nav-btn" onclick="goTo('s18')"><span class="nb-num" style="background:var(--blue-bg);color:var(--blue)">18</span>Combine<span class="nb-sub">concat, align</span></button>
+    <button class="nav-btn" onclick="goTo('s19')"><span class="nb-num" style="background:var(--coral-bg);color:var(--coral)">19</span>Convert<span class="nb-sub">astype, to_frame</span></button>
+    <button class="nav-btn" onclick="goTo('s20')"><span class="nb-num" style="background:var(--bg3);color:var(--muted)">20</span>Quick Ref<span class="nb-sub">summary + search</span></button>
+  </div>
+
+  <!-- ══════════════════ SECTION 1 ══════════════════ -->
+  <div class="section" id="s1">
+    <div class="sec-head" style="background:var(--purple-bg);border-color:var(--purple-dim)">
+      <div class="sec-num" style="background:var(--purple);color:#0a0a0a">1</div>
+      <div class="sec-title" style="color:var(--purple)">Creating a Series</div>
+      <span class="sec-tag" style="background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-dim)">foundation</span>
+    </div>
+    <div class="sec-body" style="border-color:var(--purple-dim)">
+      <div class="row">
+        <div class="cell">
+          <div class="clabel">from list (most common)</div>
+          <pre><span class="kw">import</span> pandas <span class="kw">as</span> pd
+
+s = pd.<span class="fn">Series</span>([<span class="num">10</span>, <span class="num">20</span>, <span class="num">30</span>],
+             index=[<span class="str">'a'</span>,<span class="str">'b'</span>,<span class="str">'c'</span>],
+             name=<span class="str">'scores'</span>)</pre>
+          <div class="note">Index is optional — defaults to 0, 1, 2. <code>name</code> becomes the column header when converting to DataFrame.</div>
+          <div class="series-vis">
+            <div class="sv-cell" style="animation-delay:.1s"><div class="sv-idx">a</div><div class="sv-val">10</div></div>
+            <div class="sv-cell" style="animation-delay:.2s"><div class="sv-idx">b</div><div class="sv-val">20</div></div>
+            <div class="sv-cell" style="animation-delay:.3s"><div class="sv-idx">c</div><div class="sv-val">30</div></div>
+          </div>
+        </div>
+        <div class="cell">
+          <div class="clabel">from dict</div>
+          <pre>s = pd.<span class="fn">Series</span>({<span class="str">'a'</span>: <span class="num">10</span>, <span class="str">'b'</span>: <span class="num">20</span>, <span class="str">'c'</span>: <span class="num">30</span>})</pre>
+          <div class="note">Dict keys become the index automatically. Clean for labeled data.</div>
+          <div class="clabel" style="margin-top:12px">from scalar (broadcast)</div>
+          <pre>s = pd.<span class="fn">Series</span>(<span class="num">5</span>, index=[<span class="str">'a'</span>,<span class="str">'b'</span>,<span class="str">'c'</span>])</pre>
+          <div class="note">Fills same value for every label. Great for placeholders or default flags.</div>
+          <div class="clabel" style="margin-top:12px">from numpy array</div>
+          <pre><span class="kw">import</span> numpy <span class="kw">as</span> np
+s = pd.<span class="fn">Series</span>(np.<span class="fn">array</span>([<span class="num">1.1</span>, <span class="num">2.2</span>, <span class="num">3.3</span>]))</pre>
+        </div>
+      </div>
+      <div class="row full">
+        <div class="cell">
+          <div class="clabel">when is Series useful?</div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:5px">
+            <span class="tag" style="background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-dim)">single column of data</span>
+            <span class="tag" style="background:var(--teal-bg);color:var(--teal);border:1px solid var(--teal-dim)">time series (one metric)</span>
+            <span class="tag" style="background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-dim)">labeled 1D array</span>
+            <span class="tag" style="background:var(--green-bg);color:var(--green);border:1px solid var(--green-dim)">row/column from DataFrame</span>
+          </div>
+          <div class="alt"><b>Alternatives:</b> Python list (no labels, no vectorized math) · NumPy array (faster but no labels) · dict (labels but no .mean()/.sum())</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════ SECTION 2 ══════════════════ -->
+  <div class="section" id="s2">
+    <div class="sec-head" style="background:var(--teal-bg);border-color:var(--teal-dim)">
+      <div class="sec-num" style="background:var(--teal);color:#0a0a0a">2</div>
+      <div class="sec-title" style="color:var(--teal)">Properties &amp; Attributes</div>
+      <span class="sec-tag" style="background:var(--teal-bg);color:var(--teal);border:1px solid var(--teal-dim)">introspection</span>
+    </div>
+    <div class="sec-body" style="border-color:var(--teal-dim)">
+      <div class="row">
+        <div class="cell">
+          <div class="clabel">all properties</div>
+          <pre>s.<span class="fn">values</span>   <span class="cm"># NumPy array underneath</span>
+s.<span class="fn">index</span>    <span class="cm"># Index(['a','b','c'])</span>
+s.<span class="fn">dtype</span>    <span class="cm"># dtype('int64')</span>
+s.<span class="fn">name</span>     <span class="cm"># 'scores'</span>
+s.<span class="fn">shape</span>    <span class="cm"># (3,) — always 1D</span>
+s.<span class="fn">size</span>     <span class="cm"># 3 — same as len(s)</span>
+s.<span class="fn">ndim</span>     <span class="cm"># 1 — always for Series</span>
+s.<span class="fn">empty</span>    <span class="cm"># True if len == 0</span>
+s.<span class="fn">hasnans</span>  <span class="cm"># True if any NaN</span></pre>
+        </div>
+        <div class="cell">
+          <div class="clabel">interactive — click a property</div>
+          <div class="live-demo">
+            <div class="live-title">s = pd.Series([10, 20, 30], index=['a','b','c'], name='scores')</div>
+            <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px">
+              <button class="prop-btn" onclick="showProp('values','array([10, 20, 30])','Raw NumPy data — no index attached. Use s.to_numpy() for best practice.')">values</button>
+              <button class="prop-btn" onclick="showProp('index','Index([a, b, c], dtype=object)','The row labels. Like column headers but for rows. Can be string, int, datetime.')">index</button>
+              <button class="prop-btn" onclick="showProp('dtype','dtype(int64)','Memory type. int64, float64, object (string), bool, category, datetime64.')">dtype</button>
+              <button class="prop-btn" onclick="showProp('name','scores','Becomes the column name when you call s.to_frame() or add to a DataFrame.')">name</button>
+              <button class="prop-btn" onclick="showProp('shape','(3,)','Always a 1-element tuple for Series. DataFrame.shape is (rows, cols).')">shape</button>
+              <button class="prop-btn" onclick="showProp('size','3','Total elements including NaN. Same as len(s).')">size</button>
+              <button class="prop-btn" onclick="showProp('ndim','1','Always 1 for Series. DataFrame is 2. Never changes.')">ndim</button>
+            </div>
+            <div id="prop-result">Click a property above to inspect it</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════ SECTION 3 ══════════════════ -->
+  <div class="section" id="s3">
+    <div class="sec-head" style="background:var(--blue-bg);border-color:var(--blue-dim)">
+      <div class="sec-num" style="background:var(--blue);color:#0a0a0a">3</div>
+      <div class="sec-title" style="color:var(--blue)">Accessing Elements</div>
+      <span class="sec-tag" style="background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-dim)">selection</span>
+    </div>
+    <div class="sec-body" style="border-color:var(--blue-dim)">
+      <div class="row">
+        <div class="cell">
+          <div class="clabel">by label</div>
+          <pre>s[<span class="str">'a'</span>]              <span class="cm"># → 10</span>
+s[[<span class="str">'a'</span>,<span class="str">'c'</span>]]         <span class="cm"># → Series</span>
+s.<span class="fn">loc</span>[<span class="str">'a'</span>]          <span class="cm"># explicit label</span>
+s.<span class="fn">loc</span>[<span class="str">'a'</span>:<span class="str">'c'</span>]      <span class="cm"># label slice (inclusive)</span>
+s.<span class="fn">at</span>[<span class="str">'a'</span>]           <span class="cm"># fastest single</span></pre>
+          <div class="note">Use when index has meaningful labels. .loc slice is INCLUSIVE on both ends — unlike Python slicing.</div>
+        </div>
+        <div class="cell">
+          <div class="clabel">by position (.iloc)</div>
+          <pre>s.<span class="fn">iloc</span>[<span class="num">0</span>]           <span class="cm"># first → 10</span>
+s.<span class="fn">iloc</span>[-<span class="num">1</span>]          <span class="cm"># last element</span>
+s.<span class="fn">iloc</span>[<span class="num">0</span>:<span class="num">2</span>]         <span class="cm"># first 2 (exclusive end)</span>
+s.<span class="fn">iloc</span>[[<span class="num">0</span>,<span class="num">2</span>]]       <span class="cm"># 1st and 3rd</span>
+s.<span class="fn">iat</span>[<span class="num">0</span>]            <span class="cm"># fastest single</span></pre>
+          <div class="note">Always position-based. Safe even when index is non-integer. Like Python list slicing (end exclusive).</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="cell">
+          <div class="clabel">boolean filtering — interactive</div>
+          <pre>s[s > <span class="num">20</span>]
+s[(s><span class="num">10</span>) &amp; (s&lt;<span class="num">40</span>)]
+s[s.<span class="fn">isin</span>([<span class="num">10</span>,<span class="num">30</span>])]</pre>
+          <div class="interactive-row">
+            <label>threshold &gt;</label>
+            <input type="range" min="0" max="35" step="5" value="20" id="thresh-slider" oninput="updateFilter(this.value)">
+            <span id="thresh-val">20</span>
+          </div>
+          <div class="filter-vis" id="filter-vis">
+            <span class="fv-chip" style="background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-dim)" data-val="10">a: 10</span>
+            <span class="fv-chip" style="background:var(--teal-bg);color:var(--teal);border:1px solid var(--teal-dim)" data-val="20">b: 20</span>
+            <span class="fv-chip" style="background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-dim)" data-val="30">c: 30</span>
+            <span class="fv-chip" style="background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-dim)" data-val="40">d: 40</span>
+          </div>
+          <div class="note" id="filter-note" style="margin-top:6px">showing values &gt; 20: c(30), d(40)</div>
+        </div>
+        <div class="cell">
+          <div class="clabel">access methods compared</div>
+          <table class="mini-table">
+            <tr><th>method</th><th>based on</th><th>slice end</th><th>use when</th></tr>
+            <tr><td>[]</td><td class="muted">label</td><td class="muted">exclusive</td><td class="muted">named index</td></tr>
+            <tr><td>.loc[]</td><td class="muted">label</td><td class="muted">inclusive</td><td class="muted">label slicing</td></tr>
+            <tr><td>.iloc[]</td><td class="muted">position</td><td class="muted">exclusive</td><td class="muted">always safe</td></tr>
+            <tr><td>.at[]</td><td class="muted">label</td><td class="muted">single</td><td class="muted">speed critical</td></tr>
+            <tr><td>.iat[]</td><td class="muted">position</td><td class="muted">single</td><td class="muted">speed critical</td></tr>
+          </table>
+          <div class="warn-box" style="margin-top:8px"><p>Avoid chained indexing: s[s>20][0] — use s.loc[s>20].iloc[0] to prevent SettingWithCopyWarning.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════ SECTION 4 ══════════════════ -->
+  <div class="section" id="s4">
+    <div class="sec-head" style="background:var(--green-bg);border-color:var(--green-dim)">
+      <div class="sec-num" style="background:var(--green);color:#0a0a0a">4</div>
+      <div class="sec-title" style="color:var(--green)">Math Operations</div>
+      <span class="sec-tag" style="background:var(--green-bg);color:var(--green);border:1px solid var(--green-dim)">vectorized</span>
+    </div>
+    <div class="sec-body" style="border-color:var(--green-dim)">
+      <div class="row">
+        <div class="cell">
+          <div class="clabel">element-wise (returns Series)</div>
+          <pre>s + <span class="num">10</span>          <span class="cm"># add to every element</span>
+s * <span class="num">2</span>           <span class="cm"># multiply each</span>
+s ** <span class="num">2</span>          <span class="cm"># square each</span>
+np.<span class="fn">sqrt</span>(s)     <span class="cm"># numpy ufunc works!</span>
+np.<span class="fn">log</span>(s)      <span class="cm"># natural log</span>
+s1 + s2        <span class="cm"># aligns by index</span></pre>
+          <div class="warn-box"><p>When adding two Series, pandas aligns by index first. Mismatched labels produce NaN — always check with s.isna().sum() after arithmetic.</p></div>
+        </div>
+        <div class="cell">
+          <div class="clabel">multiply demo — drag slider</div>
+          <div class="interactive-row">
+            <label>multiply by</label>
+            <input type="range" min="1" max="5" step="1" value="2" id="mult-slider" oninput="updateMath(this.value)">
+            <span id="mult-val">2×</span>
+          </div>
+          <div class="live-demo">
+            <div class="live-title" id="math-title">s × 2 = [20, 40, 60]</div>
+            <div class="bar-row"><div class="bar-label">a</div><div class="bar-track"><div class="bar-fill" id="ba" style="width:33%;background:var(--green)"></div></div><div class="bar-val" id="va">20</div></div>
+            <div class="bar-row"><div class="bar-label">b</div><div class="bar-track"><div class="bar-fill" id="bb" style="width:66%;background:var(--green)"></div></div><div class="bar-val" id="vb">40</div></div>
+            <div class="bar-row"><div class="bar-label">c</div><div class="bar-track"><div class="bar-fill" id="bc" style="width:100%;background:var(--green)"></div></div><div class="bar-val" id="vc">60</div></div>
+          </div>
+          <pre style="margin-top:10px">s.<span class="fn">sum</span>()   s.<span class="fn">mean</span>()  s.<span class="fn">median</span>()
+s.<span class="fn">min</span>()   s.<span class="fn">max</span>()   s.<span class="fn">std</span>()
+s.<span class="fn">var</span>()   s.<span class="fn">prod</span>()  s.<span class="fn">sem</span>()</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════ SECTION 5 ══════════════════ -->
+  <div class="section" id="s5">
+    <div class="sec-head" style="background:var(--red-bg);border-color:var(--red-dim)">
+      <div class="sec-num" style="background:var(--red);color:#0a0a0a">5</div>
+      <div class="sec-title" style="color:var(--red)">Handling Missing Values (NaN)</div>
+      <span class="sec-tag" style="background:var(--red-bg);color:var(--red);border:1px solid var(--red-dim)">data quality</span>
+    </div>
+    <div class="sec-body" style="border-color:var(--red-dim)">
+      <div class="row">
+        <div class="cell">
+          <div class="clabel">detect</div>
+          <pre>s.<span class="fn">isna</span>()         <span class="cm"># True where NaN</span>
+s.<span class="fn">notna</span>()        <span class="cm"># True where not NaN</span>
+s.<span class="fn">isna</span>().<span class="fn">sum</span>()  <span class="cm"># count of NaNs</span>
+s.<span class="fn">isna</span>().<span class="fn">any</span>()  <span class="cm"># any missing?</span>
+s.<span class="fn">isna</span>().<span class="fn">all</span>()  <span class="cm"># all missing?</span></pre>
+        </div>
+        <div class="cell">
+          <div class="clabel">fix</div>
+          <pre>s.<span class="fn">dropna</span>()           <span class="cm"># remove NaN rows</span>
+s.<span class="fn">fillna</span>(<span class="num">0</span>)           <span class="cm"># replace with 0</span>
+s.<span class="fn">fillna</span>(s.<span class="fn">mean</span>())   <span class="cm"># impute with mean</span>
+s.<span class="fn">ffill</span>()             <span class="cm"># forward fill</span>
+s.<span class="fn">bfill</span>()             <span class="cm"># backward fill</span>
+s.<span class="fn">interpolate</span>()       <span class="cm"># linear fill</span>
+s.<span class="fn">interpolate</span>(method=<span class="str">'cubic'</span>)</pre>
+        </div>
+      </div>
+      <div class="row full">
+        <div class="cell">
+          <div class="clabel">strategy guide</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:6px;margin-top:6px">
+            <div style="background:var(--red-bg);border:1px solid var(--red-dim);border-radius:7px;padding:9px 11px">
+              <div style="font-size:10px;font-weight:600;color:var(--red);margin-bottom:4px;font-family:var(--mono)">dropna</div>
+              <div style="font-size:11px;color:var(--muted);line-height:1.5">When missing rows have no meaning. Survey skips, optional fields.</div>
+            </div>
+            <div style="background:var(--amber-bg);border:1px solid var(--amber-dim);border-radius:7px;padding:9px 11px">
+              <div style="font-size:10px;font-weight:600;color:var(--amber);margin-bottom:4px;font-family:var(--mono)">fillna(mean)</div>
+              <div style="font-size:11px;color:var(--muted);line-height:1.5">ML preprocessing — preserves row count, neutral assumption.</div>
+            </div>
+            <div style="background:var(--teal-bg);border:1px solid var(--teal-dim);border-radius:7px;padding:9px 11px">
+              <div style="font-size:10px;font-weight:600;color:var(--teal);margin-bottom:4px;font-family:var(--mono)">ffill</div>
+              <div style="font-size:11px;color:var(--muted);line-height:1.5">Time series — stock prices on weekends, sensor gaps.</div>
+            </div>
+            <div style="background:var(--blue-bg);border:1px solid var(--blue-dim);border-radius:7px;padding:9px 11px">
+              <div style="font-size:10px;font-weight:600;color:var(--blue);margin-bottom:4px;font-family:var(--mono)">interpolate</div>
+              <div style="font-size:11px;color:var(--muted);line-height:1.5">Smooth series — temperature, curves, between known points.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════ SECTION 6 ══════════════════ -->
+  <div class="section" id="s6">
+    <div class="sec-head" style="background:var(--pink-bg);border-color:var(--pink-dim)">
+      <div class="sec-num" style="background:var(--pink);color:#0a0a0a">6</div>
+      <div class="sec-title" style="color:var(--pink)">String Operations (.str)</div>
+      <span class="sec-tag" style="background:var(--pink-bg);color:var(--pink);border:1px solid var(--pink-dim)">text data</span>
+    </div>
+    <div class="sec-body" style="border-color:var(--pink-dim)">
+      <div class="row">
+        <div class="cell">
+          <div class="clabel">case &amp; clean</div>
+          <pre>s.str.<span class="fn">upper</span>()      <span class="cm"># "hello" → "HELLO"</span>
+s.str.<span class="fn">lower</span>()      <span class="cm"># "HELLO" → "hello"</span>
+s.str.<span class="fn">title</span>()      <span class="cm"># "hello world" → "Hello World"</span>
+s.str.<span class="fn">strip</span>()      <span class="cm"># remove surrounding spaces</span>
+s.str.<span class="fn">lstrip</span>()     <span class="cm"># left only</span>
+s.str.<span class="fn">rstrip</span>()     <span class="cm"># right only</span>
+s.str.<span class="fn">len</span>()        <span class="cm"># length of each string</span></pre>
+        </div>
+        <div class="cell">
+          <div class="clabel">search &amp; match</div>
+          <pre>s.str.<span class="fn">contains</span>(<span class="str">'py'</span>)       <span class="cm"># bool</span>
+s.str.<span class="fn">startswith</span>(<span class="str">'A'</span>)     <span class="cm"># bool</span>
+s.str.<span class="fn">endswith</span>(<span class="str">'ing'</span>)    <span class="cm"># bool</span>
+s.str.<span class="fn">match</span>(<span class="str">r'^\d+'</span>)     <span class="cm"># regex at start</span>
+s.str.<span class="fn">fullmatch</span>(<span class="str">r'\d+'</span>) <span class="cm"># full match</span>
+s.str.<span class="fn">count</span>(<span class="str">'l'</span>)        <span class="cm"># count occurrences</span></pre>
+        </div>
+      </div>
+      <div class="row">
+        <div class="cell">
+          <div class="clabel">split &amp; extract</div>
+          <pre>s.str.<span class="fn">split</span>(<span class="str">','</span>)              <span class="cm"># → list per row</span>
+s.str.<span class="fn">split</span>(<span class="str">','</span>, expand=<span class="kw">True</span>) <span class="cm"># → DataFrame</span>
+s.str.<span class="fn">extract</span>(<span class="str">r'(\d+)'</span>)       <span class="cm"># capture group</span>
+s.str.<span class="fn">extractall</span>(<span class="str">r'(\d+)'</span>)   <span class="cm"># all matches</span>
+s.str[<span class="num">0</span>:<span class="num">3</span>]                    <span class="cm"># slice chars</span></pre>
+        </div>
+        <div class="cell">
+          <div class="clabel">replace &amp; real-world uses</div>
+          <pre>s.str.<span class="fn">replace</span>(<span class="str">'a'</span>,<span class="str">'A'</span>)
+s.str.<span class="fn">replace</span>(<span class="str">r'\d'</span>,<span class="str">'X'</span>, regex=<span class="kw">True</span>)</pre>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px">
+            <span class="tag" style="background:var(--pink-bg);color:var(--pink);border:1px solid var(--pink-dim)">cleaning scraped text</span>
+            <span class="tag" style="background:var(--pink-bg);color:var(--pink);border:1px solid var(--pink-dim)">email domain extraction</span>
+            <span class="tag" style="background:var(--pink-bg);color:var(--pink);border:1px solid var(--pink-dim)">parsing CSV in a column</span>
+            <span class="tag" style="background:var(--pink-bg);color:var(--pink);border:1px solid var(--pink-dim)">standardizing casing</span>
+            <span class="tag" style="background:var(--pink-bg);color:var(--pink);border:1px solid var(--pink-dim)">regex feature extraction</span>
+          </div>
+          <div class="alt"><b>Alternative:</b> .apply(lambda x: x.upper()) works but is 5–10× slower than the vectorized .str accessor.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════ SECTION 7 ══════════════════ -->
+  <div class="section" id="s7">
+    <div class="sec-head" style="background:var(--amber-bg);border-color:var(--amber-dim)">
+      <div class="sec-num" style="background:var(--amber);color:#0a0a0a">7</div>
+      <div class="sec-title" style="color:var(--amber)">DateTime Operations (.dt)</div>
+      <span class="sec-tag" style="background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-dim)">time series</span>
+    </div>
+    <div class="sec-body" style="border-color:var(--amber-dim)">
+      <div class="row">
+        <div class="cell">
+          <div class="clabel">setup &amp; components</div>
+          <pre>s = pd.<span class="fn">to_datetime</span>([
+  <span class="str">'2024-01-15'</span>, <span class="str">'2024-06-30'</span>])
+
+s.dt.<span class="fn">year</span>         <span class="cm"># [2024, 2024]</span>
+s.dt.<span class="fn">month</span>        <span class="cm"># [1, 6]</span>
+s.dt.<span class="fn">day</span>          <span class="cm"># [15, 30]</span>
+s.dt.<span class="fn">hour</span>         <span class="cm"># hour of day</span>
+s.dt.<span class="fn">minute</span>       <span class="cm"># minute</span>
+s.dt.<span class="fn">dayofweek</span>   <span class="cm"># 0=Mon … 6=Sun</span>
+s.dt.<span class="fn">day_name</span>()  <span class="cm"># 'Monday'…</span>
+s.dt.<span class="fn">quarter</span>     <span class="cm"># 1–4</span></pre>
+        </div>
+        <div class="cell">
+          <div class="clabel">boolean &amp; advanced</div>
+          <pre>s.dt.<span class="fn">is_month_end</span>    <span class="cm"># bool</span>
+s.dt.<span class="fn">is_month_start</span>  <span class="cm"># bool</span>
+s.dt.<span class="fn">is_leap_year</span>    <span class="cm"># bool</span>
+s.dt.<span class="fn">is_quarter_end</span>  <span class="cm"># bool</span>
+
+<span class="cm"># Timezone ops</span>
+s.dt.<span class="fn">tz_localize</span>(<span class="str">'UTC'</span>)
+s.dt.<span class="fn">tz_convert</span>(<span class="str">'Asia/Kolkata'</span>)
+
+<span class="cm"># Formatting</span>
+s.dt.<span class="fn">strftime</span>(<span class="str">'%d-%b-%Y'</span>)</pre>
+          <div class="info-box"><p>Must run pd.to_datetime() first. Then .dt unlocks 30+ time-aware properties. Ideal for groupby('month'), resampling, and filtering weekdays.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════ SECTION 8 ══════════════════ -->
+  <div class="section" id="s8">
+    <div class="sec-head" style="background:var(--green-bg);border-color:var(--green-dim)">
+      <div class="sec-num" style="background:var(--green);color:#0a0a0a">8</div>
+      <div class="sec-title" style="color:var(--green)">Descriptive Statistics</div>
+      <span class="sec-tag" style="background:var(--green-bg);color:var(--green);border:1px solid var(--green-dim)">explore</span>
+    </div>
+    <div class="sec-body" style="border-color:var(--green-dim)">
+      <div class="row">
+        <div class="cell">
+          <div class="clabel">all stat methods</div>
+          <pre>s.<span class="fn">describe</span>()        <span class="cm"># full summary</span>
+s.<span class="fn">mean</span>()   s.<span class="fn">median</span>()
+s.<span class="fn">std</span>()    s.<span class="fn">var</span>()
+s.<span class="fn">min</span>()    s.<span class="fn">max</span>()
+s.<span class="fn">skew</span>()             <span class="cm"># distribution skew</span>
+s.<span class="fn">kurt</span>()             <span class="cm"># kurtosis (peakedness)</span>
+s.<span class="fn">sem</span>()              <span class="cm"># standard error of mean</span>
+s.<span class="fn">mad</span>()              <span class="cm"># mean absolute deviation</span>
+s.<span class="fn">quantile</span>(<span class="num">0.25</span>)    <span class="cm"># 25th percentile</span>
+s.<span class="fn">quantile</span>([.<span class="num">25</span>,.<span class="num">5</span>,.<span class="num">75</span>])</pre>
+        </div>
+        <div class="cell">
+          <div class="clabel">describe() output explained</div>
+          <table class="mini-table">
+            <tr><th>stat</th><th>value</th><th>meaning</th></tr>
+            <tr><td>count</td><td style="color:var(--green)">4.0</td><td class="muted">non-null rows</td></tr>
+            <tr><td>mean</td><td style="color:var(--green)">25.0</td><td class="muted">arithmetic average</td></tr>
+            <tr><td>std</td><td style="color:var(--green)">12.9</td><td class="muted">spread around mean</td></tr>
+            <tr><td>min</td><td style="color:var(--green)">10.0</td><td class="muted">smallest value</td></tr>
+            <tr><td>25%</td><td style="color:var(--green)">17.5</td><td class="muted">Q1 — lower quartile</td></tr>
+            <tr><td>50%</td><td style="color:var(--green)">25.0</td><td class="muted">median</td></tr>
+            <tr><td>75%</td><td style="color:var(--green)">32.5</td><td class="muted">Q3 — upper quartile</td></tr>
+            <tr><td>max</td><td style="color:var(--green)">40.0</td><td class="muted">largest value</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════ SECTION 9 ══════════════════ -->
+  <div class="section" id="s9">
+    <div class="sec-head" style="background:var(--purple-bg);border-color:var(--purple-dim)">
+      <div class="sec-num" style="background:var(--purple);color:#0a0a0a">9</div>
+      <div class="sec-title" style="color:var(--purple)">Value Counts &amp; Unique</div>
+      <span class="sec-tag" style="background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-dim)">frequency</span>
+    </div>
+    <div class="sec-body" style="border-color:var(--purple-dim)">
+      <div class="row">
+        <div class="cell">
+          <div class="clabel">methods</div>
+          <pre>s.<span class="fn">value_counts</span>()             <span class="cm"># freq table</span>
+s.<span class="fn">value_counts</span>(normalize=<span class="kw">True</span>) <span class="cm"># proportions</span>
+s.<span class="fn">value_counts</span>(dropna=<span class="kw">False</span>)  <span class="cm"># include NaN</span>
+s.<span class="fn">value_counts</span>(bins=<span class="num">4</span>)        <span class="cm"># histogram bins</span>
+s.<span class="fn">unique</span>()                    <span class="cm"># array of uniques</span>
+s.<span class="fn">nunique</span>()                   <span class="cm"># count of uniques</span>
+s.<span class="fn">mode</span>()                      <span class="cm"># most common value(s)</span>
+s.<span class="fn">mode</span>()[<span class="num">0</span>]                   <span class="cm"># top mode</span></pre>
+        </div>
+        <div class="cell">
+          <div class="clabel">live frequency chart</div>
+          <div class="live-demo">
+            <div class="live-title">s = ['cat','dog','cat','bird','dog','cat'] → value_counts()</div>
+            <div class="bar-row">
+              <div class="bar-label" style="width:32px;text-align:right">cat</div>
+              <div class="bar-track"><div class="bar-fill" style="width:100%;background:var(--purple)"></div></div>
+              <div class="bar-val">3</div>
+            </div>
+            <div class="bar-row">
+              <div class="bar-label" style="width:32px;text-align:right">dog</div>
+              <div class="bar-track"><div class="bar-fill" style="width:66%;background:var(--purple)"></div></div>
+              <div class="bar-val">2</div>
+            </div>
+            <div class="bar-row">
+              <div class="bar-label" style="width:32px;text-align:right">bird</div>
+              <div class="bar-track"><div class="bar-fill" style="width:33%;background:var(--purple)"></div></div>
+              <div class="bar-val">1</div>
+            </div>
+          </div>
+          <div class="alt" style="margin-top:8px"><b>Real-world:</b> count category frequencies · check class imbalance before ML · audit data quality · find mode values</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════ SECTION 10 ══════════════════ -->
+  <div class="section" id="s10">
+    <div class="sec-head" style="background:var(--coral-bg);border-color:var(--coral-dim)">
+      <div class="sec-num" style="background:var(--coral);color:#0a0a0a">10</div>
+      <div class="sec-title" style="color:var(--coral)">Rank &amp; Cumulative</div>
+      <span class="sec-tag" style="background:var(--coral-bg);color:var(--coral);border:1px solid var(--coral-dim)">running ops</span>
+    </div>
+    <div class="sec-body" style="border-color:var(--coral-dim)">
+      <div class="row">
+        <div class="cell">
+          <div class="clabel">ranking</div>
+          <pre>s.<span class="fn">rank</span>()                 <span class="cm"># 1-based rank</span>
+s.<span class="fn">rank</span>(ascending=<span class="kw">False</span>)  <span class="cm"># highest = 1</span>
+s.<span class="fn">rank</span>(method=<span class="str">'dense'</span>)  <span class="cm"># no gaps</span>
+s.<span class="fn">rank</span>(method=<span class="str">'min'</span>)    <span class="cm"># tie = min rank</span>
+s.<span class="fn">rank</span>(pct=<span class="kw">True</span>)        <span class="cm"># 0–1 percentile</span></pre>
+          <div class="note">Rank methods: 'average' (default), 'min', 'max', 'first' (order of appearance), 'dense' (no gaps for ties).</div>
+        </div>
+        <div class="cell">
+          <div class="clabel">cumulative — visual flow</div>
+          <pre>s.<span class="fn">cumsum</span>()   <span class="cm"># running total</span>
+s.<span class="fn">cumprod</span>()  <span class="cm"># running product</span>
+s.<span class="fn">cummax</span>()   <span class="cm"># running maximum</span>
+s.<span class="fn">cummin</span>()   <span class="cm"># running minimum</span></pre>
+          <div class="live-demo" style="margin-top:8px">
+            <div class="live-title">cumsum([10, 20, 30, 40])</div>
+            <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
+              <div class="cumsum-step"><div class="cs-lbl">step 1</div><div class="cs-num" style="animation-delay:.1s">10</div></div>
+              <div class="cs-arrow">+20→</div>
+              <div class="cumsum-step"><div class="cs-lbl">step 2</div><div class="cs-num" style="animation-delay:.25s">30</div></div>
+              <div class="cs-arrow">+30→</div>
+              <div class="cumsum-step"><div class="cs-lbl">step 3</div><div class="cs-num" style="animation-delay:.4s">60</div></div>
+              <div class="cs-arrow">+40→</div>
+              <div class="cumsum-step"><div class="cs-lbl">step 4</div><div class="cs-num" style="animation-delay:.55s">100</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════ SECTION 11 ══════════════════ -->
+  <div class="section" id="s11">
+    <div class="sec-head" style="background:var(--blue-bg);border-color:var(--blue-dim)">
+      <div class="sec-num" style="background:var(--blue);color:#0a0a0a">11</div>
+      <div class="sec-title" style="color:var(--blue)">Rolling &amp; Expanding</div>
+      <span class="sec-tag" style="background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-dim)">window ops</span>
+    </div>
+    <div class="sec-body" style="border-color:var(--blue-dim)">
+      <div class="row">
+        <div class="cell">
+          <div class="clabel">rolling window (fixed size)</div>
+          <pre>s.<span class="fn">rolling</span>(<span class="num">3</span>).<span class="fn">mean</span>()   <span class="cm"># 3-point moving avg</span>
+s.<span class="fn">rolling</span>(<span class="num">3</span>).<span class="fn">sum</span>()
+s.<span class="fn">rolling</span>(<span class="num">3</span>).<span class="fn">min</span>()
+s.<span class="fn">rolling</span>(<span class="num">3</span>).<span class="fn">std</span>()
+s.<span class="fn">rolling</span>(<span class="num">3</span>).<span class="fn">max</span>()
+s.<span class="fn">rolling</span>(<span class="num">3</span>, min_periods=<span class="num">1</span>).<span class="fn">mean</span>()</pre>
+          <div class="note">First (window−1) values are NaN unless min_periods is set. Window slides one step at a time across the Series.</div>
+        </div>
+        <div class="cell">
+          <div class="clabel">expanding window (grows from start)</div>
+          <pre>s.<span class="fn">expanding</span>().<span class="fn">mean</span>()  <span class="cm"># growing average</span>
+s.<span class="fn">expanding</span>().<span class="fn">sum</span>()   <span class="cm"># = cumsum()</span>
+s.<span class="fn">expanding</span>().<span class="fn">max</span>()
+s.<span class="fn">expanding</span>(<span class="num">2</span>).<span class="fn">std</span>()  <span class="cm"># min 2 periods</span></pre>
+          <div class="note">Like rolling but window grows — always uses all data up to the current point.</div>
+          <div class="alt"><b>Real-world:</b> stock moving average · noise smoothing · detecting trend shifts · volatility windows · sales 7-day average</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════ SECTION 12 ══════════════════ -->
+  <div class="section" id="s12">
+    <div class="sec-head" style="background:var(--teal-bg);border-color:var(--teal-dim)">
+      <div class="sec-num" style="background:var(--teal);color:#0a0a0a">12</div>
+      <div class="sec-title" style="color:var(--teal)">Compare &amp; Filter</div>
+      <span class="sec-tag" style="background:var(--teal-bg);color:var(--teal);border:1px solid var(--teal-dim)">conditions</span>
+    </div>
+    <div class="sec-body" style="border-color:var(--teal-dim)">
+      <div class="row">
+        <div class="cell">
+          <div class="clabel">comparison methods</div>
+          <pre>s.<span class="fn">between</span>(<span class="num">10</span>, <span class="num">30</span>)      <span class="cm"># 10 ≤ x ≤ 30 → bool</span>
+s.<span class="fn">isin</span>([<span class="num">10</span>, <span class="num">30</span>])       <span class="cm"># exact match → bool</span>
+s.<span class="fn">clip</span>(lower=<span class="num">10</span>, upper=<span class="num">30</span>) <span class="cm"># clamp range</span>
+s.<span class="fn">where</span>(s > <span class="num">20</span>)        <span class="cm"># keep, else NaN</span>
+s.<span class="fn">mask</span>(s > <span class="num">20</span>)         <span class="cm"># NaN where True</span>
+s.<span class="fn">gt</span>(<span class="num">20</span>)  s.<span class="fn">lt</span>(<span class="num">20</span>)      <span class="cm"># .gt .lt .ge .le .eq</span></pre>
+        </div>
+        <div class="cell">
+          <div class="clabel">clip() — clamping demo</div>
+          <div class="live-demo">
+            <div class="live-title">s.clip(lower=15, upper=35)</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;font-size:11px;font-family:var(--mono)">
+              <div style="color:var(--hint)">value</div><div style="color:var(--hint)">clip result</div><div style="color:var(--hint)">why</div>
+              <div>5</div><div style="color:var(--teal);font-weight:600">15</div><div style="color:var(--muted)">below lower</div>
+              <div>20</div><div style="color:var(--text)">20</div><div style="color:var(--muted)">in range</div>
+              <div>30</div><div style="color:var(--text)">30</div><div style="color:var(--muted)">in range</div>
+              <div>50</div><div style="color:var(--teal);font-weight:600">35</div><div style="color:var(--muted)">above upper</div>
+            </div>
+          </div>
+          <div class="alt" style="margin-top:8px"><b>where vs mask:</b> .where keeps values where condition is True (NaN elsewhere). .mask is the opposite — NaN where True.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════ SECTION 13 ══════════════════ -->
+  <div class="section" id="s13">
+    <div class="sec-head" style="background:var(--amber-bg);border-color:var(--amber-dim)">
+      <div class="sec-num" style="background:var(--amber);color:#0a0a0a">13</div>
+      <div class="sec-title" style="color:var(--amber)">Map, Replace &amp; Apply</div>
+      <span class="sec-tag" style="background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-dim)">transform</span>
+    </div>
+    <div class="sec-body" style="border-color:var(--amber-dim)">
+      <div class="row">
+        <div class="cell">
+          <div class="clabel">map — element lookup</div>
+          <pre>s.<span class="fn">map</span>({<span class="num">1</span>:<span class="str">'low'</span>, <span class="num">2</span>:<span class="str">'mid'</span>, <span class="num">3</span>:<span class="str">'high'</span>})
+s.<span class="fn">map</span>(lambda x: x * <span class="num">10</span>)
+s.<span class="fn">map</span>(str)  <span class="cm"># convert each to string</span></pre>
+          <div class="note">Dict lookup: unmatched keys become NaN. Function form never produces NaN from matching.</div>
+        </div>
+        <div class="cell">
+          <div class="clabel">replace &amp; apply</div>
+          <pre>s.<span class="fn">replace</span>(<span class="num">10</span>, <span class="num">99</span>)            <span class="cm"># exact swap</span>
+s.<span class="fn">replace</span>({<span class="num">10</span>:<span class="num">99</span>, <span class="num">20</span>:<span class="num">88</span>})   <span class="cm"># multi-swap</span>
+s.<span class="fn">replace</span>(<span class="str">r'\d+'</span>, <span class="str">'N'</span>, regex=<span class="kw">True</span>)
+s.<span class="fn">apply</span>(lambda x: x ** <span class="num">2</span>)    <span class="cm"># custom fn</span>
+s.<span class="fn">apply</span>(np.log)               <span class="cm"># numpy fn</span></pre>
+        </div>
+      </div>
+      <div class="row full">
+        <div class="cell">
+          <div class="clabel">when to use which</div>
+          <table class="mini-table">
+            <tr><th>method</th><th>input</th><th>unmatched</th><th>use for</th></tr>
+            <tr><td>.map(dict)</td><td class="muted">dict</td><td class="muted">NaN</td><td class="muted">label encoding, lookup tables</td></tr>
+            <tr><td>.map(fn)</td><td class="muted">function</td><td class="muted">—</td><td class="muted">per-element transform</td></tr>
+            <tr><td>.replace()</td><td class="muted">dict/value</td><td class="muted">unchanged</td><td class="muted">fix specific values</td></tr>
+            <tr><td>.apply(fn)</td><td class="muted">function</td><td class="muted">—</td><td class="muted">complex logic, any return type</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════ SECTION 14 ══════════════════ -->
+  <div class="section" id="s14">
+    <div class="sec-head" style="background:var(--red-bg);border-color:var(--red-dim)">
+      <div class="sec-num" style="background:var(--red);color:#0a0a0a">14</div>
+      <div class="sec-title" style="color:var(--red)">Duplicate Handling</div>
+      <span class="sec-tag" style="background:var(--red-bg);color:var(--red);border:1px solid var(--red-dim)">dedup</span>
+    </div>
+    <div class="sec-body" style="border-color:var(--red-dim)">
+      <div class="row">
+        <div class="cell">
+          <div class="clabel">detect &amp; remove</div>
+          <pre>s.<span class="fn">duplicated</span>()           <span class="cm"># bool mask</span>
+s.<span class="fn">duplicated</span>(keep=<span class="str">'last'</span>)
+s.<span class="fn">duplicated</span>(keep=<span class="kw">False</span>)  <span class="cm"># mark ALL dupes</span>
+s.<span class="fn">drop_duplicates</span>()        <span class="cm"># remove dupes</span>
+s.<span class="fn">drop_duplicates</span>(keep=<span class="str">'last'</span>)
+s[~s.<span class="fn">duplicated</span>()]         <span class="cm"># filter unique</span></pre>
+        </div>
+        <div class="cell">
+          <div class="clabel">keep options explained</div>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-top:5px">
+            <div style="background:var(--red-bg);border:1px solid var(--red-dim);border-radius:6px;padding:8px 10px">
+              <div style="font-family:var(--mono);font-size:10px;font-weight:600;color:var(--red);margin-bottom:3px">'first' (default)</div>
+              <div style="font-size:11px;color:var(--muted)">Keep first occurrence, mark the rest as duplicate (True).</div>
+            </div>
+            <div style="background:var(--red-bg);border:1px solid var(--red-dim);border-radius:6px;padding:8px 10px">
+              <div style="font-family:var(--mono);font-size:10px;font-weight:600;color:var(--red);margin-bottom:3px">'last'</div>
+              <div style="font-size:11px;color:var(--muted)">Keep last occurrence, mark earlier ones as duplicate.</div>
+            </div>
+            <div style="background:var(--red-bg);border:1px solid var(--red-dim);border-radius:6px;padding:8px 10px">
+              <div style="font-family:var(--mono);font-size:10px;font-weight:600;color:var(--red);margin-bottom:3px">False</div>
+              <div style="font-size:11px;color:var(--muted)">Mark ALL occurrences as True — even the first one.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════ SECTION 15 ══════════════════ -->
+  <div class="section" id="s15">
+    <div class="sec-head" style="background:var(--pink-bg);border-color:var(--pink-dim)">
+      <div class="sec-num" style="background:var(--pink);color:#0a0a0a">15</div>
+      <div class="sec-title" style="color:var(--pink)">Shift, Diff &amp; Pct Change</div>
+      <span class="sec-tag" style="background:var(--pink-bg);color:var(--pink);border:1px solid var(--pink-dim)">lag ops</span>
+    </div>
+    <div class="sec-body" style="border-color:var(--pink-dim)">
+      <div class="row">
+        <div class="cell">
+          <div class="clabel">code</div>
+          <pre>s.<span class="fn">shift</span>(<span class="num">1</span>)       <span class="cm"># lag by 1 (prev row)</span>
+s.<span class="fn">shift</span>(-<span class="num">1</span>)      <span class="cm"># lead by 1 (next row)</span>
+s.<span class="fn">diff</span>()         <span class="cm"># s − s.shift(1)</span>
+s.<span class="fn">diff</span>(<span class="num">2</span>)        <span class="cm"># 2-period difference</span>
+s.<span class="fn">pct_change</span>()   <span class="cm"># (s−prev)/prev → %</span>
+s.<span class="fn">pct_change</span>(<span class="num">7</span>) <span class="cm"># 7-day % change</span></pre>
+        </div>
+        <div class="cell">
+          <div class="clabel">shift(1) visualized</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px;font-family:var(--mono);font-size:12px">
+            <div>
+              <div style="font-size:9px;color:var(--hint);margin-bottom:5px;letter-spacing:.5px">ORIGINAL</div>
+              <div style="line-height:2.2">
+                <span style="color:var(--muted)">0  </span><span style="color:var(--text)">10</span><br>
+                <span style="color:var(--muted)">1  </span><span style="color:var(--text)">20</span><br>
+                <span style="color:var(--muted)">2  </span><span style="color:var(--text)">30</span><br>
+                <span style="color:var(--muted)">3  </span><span style="color:var(--text)">40</span>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:9px;color:var(--hint);margin-bottom:5px;letter-spacing:.5px">AFTER shift(1)</div>
+              <div style="line-height:2.2">
+                <span style="color:var(--muted)">0  </span><span style="color:var(--hint)">NaN</span><br>
+                <span style="color:var(--muted)">1  </span><span style="color:var(--pink);font-weight:600">10</span><br>
+                <span style="color:var(--muted)">2  </span><span style="color:var(--pink);font-weight:600">20</span><br>
+                <span style="color:var(--muted)">3  </span><span style="color:var(--pink);font-weight:600">30</span>
+              </div>
+            </div>
+          </div>
+          <div class="alt" style="margin-top:8px"><b>Use cases:</b> daily return = pct_change() · compare to yesterday = shift(1) · autocorrelation · lag features for ML</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════ SECTION 16 ══════════════════ -->
+  <div class="section" id="s16">
+    <div class="sec-head" style="background:var(--purple-bg);border-color:var(--purple-dim)">
+      <div class="sec-num" style="background:var(--purple);color:#0a0a0a">16</div>
+      <div class="sec-title" style="color:var(--purple)">Index Operations</div>
+      <span class="sec-tag" style="background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-dim)">indexing</span>
+    </div>
+    <div class="sec-body" style="border-color:var(--purple-dim)">
+      <div class="row">
+        <div class="cell">
+          <div class="clabel">modify index</div>
+          <pre>s.index = [<span class="str">'x'</span>,<span class="str">'y'</span>,<span class="str">'z'</span>]   <span class="cm"># direct set</span>
+s.<span class="fn">rename</span>({<span class="str">'a'</span>:<span class="str">'A'</span>})    <span class="cm"># rename labels</span>
+s.<span class="fn">rename</span>(index=str.<span class="fn">upper</span>) <span class="cm"># via function</span>
+s.<span class="fn">reset_index</span>()           <span class="cm"># → DataFrame</span>
+s.<span class="fn">reset_index</span>(drop=<span class="kw">True</span>)  <span class="cm"># keep as Series</span>
+s.<span class="fn">set_axis</span>([<span class="str">'p'</span>,<span class="str">'q'</span>,<span class="str">'r'</span>])</pre>
+        </div>
+        <div class="cell">
+          <div class="clabel">reindex &amp; align</div>
+          <pre>s.<span class="fn">reindex</span>([<span class="str">'a'</span>,<span class="str">'b'</span>,<span class="str">'d'</span>])    <span class="cm"># new index</span>
+s.<span class="fn">reindex</span>(fill_value=<span class="num">0</span>)      <span class="cm"># fill missing</span>
+s.<span class="fn">reindex</span>(method=<span class="str">'ffill'</span>)   <span class="cm"># forward fill</span>
+s1.<span class="fn">align</span>(s2)                  <span class="cm"># align two Series</span></pre>
+          <div class="info-box"><p>reindex is great for making two Series share the same index before doing math — avoids NaN from misaligned operations.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════ SECTION 17 ══════════════════ -->
+  <div class="section" id="s17">
+    <div class="sec-head" style="background:var(--green-bg);border-color:var(--green-dim)">
+      <div class="sec-num" style="background:var(--green);color:#0a0a0a">17</div>
+      <div class="sec-title" style="color:var(--green)">Sorting</div>
+      <span class="sec-tag" style="background:var(--green-bg);color:var(--green);border:1px solid var(--green-dim)">order</span>
+    </div>
+    <div class="sec-body" style="border-color:var(--green-dim)">
+      <div class="row">
+        <div class="cell">
+          <div class="clabel">sort by values</div>
+          <pre>s.<span class="fn">sort_values</span>()              <span class="cm"># asc by default</span>
+s.<span class="fn">sort_values</span>(ascending=<span class="kw">False</span>)
+s.<span class="fn">sort_values</span>(na_position=<span class="str">'first'</span>)
+s.<span class="fn">nlargest</span>(<span class="num">3</span>)    <span class="cm"># top 3 (fast!)</span>
+s.<span class="fn">nsmallest</span>(<span class="num">3</span>)  <span class="cm"># bottom 3 (fast!)</span></pre>
+        </div>
+        <div class="cell">
+          <div class="clabel">sort by index</div>
+          <pre>s.<span class="fn">sort_index</span>()             <span class="cm"># A→Z or 0→n</span>
+s.<span class="fn">sort_index</span>(ascending=<span class="kw">False</span>)
+s.<span class="fn">sort_index</span>(na_position=<span class="str">'last'</span>)</pre>
+          <div class="note">All sort methods return a new Series — original unchanged. Use inplace=True to modify in place (generally discouraged in modern pandas).</div>
+          <div class="note" style="margin-top:6px">nlargest / nsmallest are faster than sort_values().tail(n) for large Series.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════ SECTION 18 ══════════════════ -->
+  <div class="section" id="s18">
+    <div class="sec-head" style="background:var(--blue-bg);border-color:var(--blue-dim)">
+      <div class="sec-num" style="background:var(--blue);color:#0a0a0a">18</div>
+      <div class="sec-title" style="color:var(--blue)">Combining Series</div>
+      <span class="sec-tag" style="background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-dim)">merge</span>
+    </div>
+    <div class="sec-body" style="border-color:var(--blue-dim)">
+      <div class="row">
+        <div class="cell">
+          <div class="clabel">concat — stacking</div>
+          <pre>pd.<span class="fn">concat</span>([s1, s2])          <span class="cm"># stack rows</span>
+pd.<span class="fn">concat</span>([s1, s2], axis=<span class="num">1</span>)  <span class="cm"># side by side</span>
+pd.<span class="fn">concat</span>([s1, s2],
+          ignore_index=<span class="kw">True</span>)   <span class="cm"># reindex 0,1,2…</span>
+pd.<span class="fn">concat</span>([s1, s2], keys=[<span class="str">'a'</span>,<span class="str">'b'</span>]) <span class="cm"># multi-index</span></pre>
+        </div>
+        <div class="cell">
+          <div class="clabel">combine — smart merge</div>
+          <pre>s1.<span class="fn">combine</span>(s2, max)          <span class="cm"># element-wise max</span>
+s1.<span class="fn">combine_first</span>(s2)          <span class="cm"># fill s1's NaN</span>
+                              <span class="cm"># with values from s2</span></pre>
+          <div class="note">combine_first is perfect for merging two partial datasets where each has gaps the other fills.</div>
+          <div class="alt" style="margin-top:6px"><b>Alternatives:</b> np.where(s1.isna(), s2, s1) · pd.DataFrame({'a':s1,'b':s2}) for side-by-side comparison</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════ SECTION 19 ══════════════════ -->
+  <div class="section" id="s19">
+    <div class="sec-head" style="background:var(--coral-bg);border-color:var(--coral-dim)">
+      <div class="sec-num" style="background:var(--coral);color:#0a0a0a">19</div>
+      <div class="sec-title" style="color:var(--coral)">Type Conversion &amp; Export</div>
+      <span class="sec-tag" style="background:var(--coral-bg);color:var(--coral);border:1px solid var(--coral-dim)">convert</span>
+    </div>
+    <div class="sec-body" style="border-color:var(--coral-dim)">
+      <div class="row">
+        <div class="cell">
+          <div class="clabel">type conversion</div>
+          <pre>s.<span class="fn">astype</span>(float)           <span class="cm"># to float64</span>
+s.<span class="fn">astype</span>(<span class="str">'Int64'</span>)         <span class="cm"># nullable int</span>
+s.<span class="fn">astype</span>(str)             <span class="cm"># to string (object)</span>
+s.<span class="fn">astype</span>(<span class="str">'category'</span>)      <span class="cm"># memory efficient</span>
+s.<span class="fn">astype</span>(<span class="str">'datetime64[ns]'</span>)
+pd.<span class="fn">to_numeric</span>(s)          <span class="cm"># safe conversion</span>
+pd.<span class="fn">to_numeric</span>(s, errors=<span class="str">'coerce'</span>) <span class="cm"># NaN on fail</span></pre>
+        </div>
+        <div class="cell">
+          <div class="clabel">export</div>
+          <pre>s.<span class="fn">to_list</span>()      <span class="cm"># Python list</span>
+s.<span class="fn">to_dict</span>()      <span class="cm"># {index: value}</span>
+s.<span class="fn">to_frame</span>()     <span class="cm"># 1-column DataFrame</span>
+s.<span class="fn">to_numpy</span>()     <span class="cm"># NumPy array</span>
+s.<span class="fn">to_csv</span>(<span class="str">'f.csv'</span>)
+s.<span class="fn">to_json</span>()      <span class="cm"># JSON string</span>
+s.<span class="fn">to_clipboard</span>() <span class="cm"># copy to clipboard</span></pre>
+          <div class="note">Use 'category' dtype when a Series has few unique values — saves up to 90% memory compared to object dtype.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════ SECTION 20 — QUICK REF ══════════════════ -->
+  <div class="section" id="s20">
+    <div class="sec-head" style="background:var(--bg3);border-color:var(--border2)">
+      <div class="sec-num" style="background:var(--border2);color:var(--muted)">20</div>
+      <div class="sec-title" style="color:var(--muted)">Quick Reference — Searchable Table</div>
+      <span class="sec-tag" style="background:var(--bg3);color:var(--hint);border:1px solid var(--border)">all methods</span>
+    </div>
+    <div class="sec-body" style="border-color:var(--border2)">
+      <div class="row full">
+        <div class="cell">
+          <div class="search-bar">
+            <input type="text" id="ref-search" placeholder="search methods, e.g. 'rolling', 'NaN', 'string'..." oninput="filterRef(this.value)">
+          </div>
+          <div style="overflow-x:auto;margin-top:10px">
+            <table class="mini-table" id="ref-table" style="table-layout:fixed;width:100%">
+              <tr><th style="width:32%">method</th><th style="width:16%">returns</th><th style="width:24%">category</th><th>use for</th></tr>
+              <tr data-kw="create list dict series"><td>pd.Series([...])</td><td class="muted">Series</td><td class="muted" style="color:var(--purple)">create</td><td class="muted">create from list/dict/scalar</td></tr>
+              <tr data-kw="access label loc at"><td>s['a'] / s.loc['a']</td><td class="muted">scalar/Series</td><td class="muted" style="color:var(--blue)">access</td><td class="muted">label-based access</td></tr>
+              <tr data-kw="access position iloc iat"><td>s.iloc[0] / s.iat[0]</td><td class="muted">scalar/Series</td><td class="muted" style="color:var(--blue)">access</td><td class="muted">position-based access</td></tr>
+              <tr data-kw="missing nan isna notna"><td>s.isna() / s.notna()</td><td class="muted">bool Series</td><td class="muted" style="color:var(--red)">missing</td><td class="muted">detect NaN values</td></tr>
+              <tr data-kw="fill missing nan fillna"><td>s.fillna(val)</td><td class="muted">Series</td><td class="muted" style="color:var(--red)">missing</td><td class="muted">replace NaN with value</td></tr>
+              <tr data-kw="drop missing nan dropna"><td>s.dropna()</td><td class="muted">Series</td><td class="muted" style="color:var(--red)">missing</td><td class="muted">remove NaN rows</td></tr>
+              <tr data-kw="fill forward backward ffill bfill"><td>s.ffill() / s.bfill()</td><td class="muted">Series</td><td class="muted" style="color:var(--red)">missing</td><td class="muted">forward/backward fill</td></tr>
+              <tr data-kw="interpolate missing fill linear"><td>s.interpolate()</td><td class="muted">Series</td><td class="muted" style="color:var(--red)">missing</td><td class="muted">linear fill between values</td></tr>
+              <tr data-kw="math sum aggregate"><td>s.sum() / s.mean()</td><td class="muted">scalar</td><td class="muted" style="color:var(--green)">math</td><td class="muted">aggregate statistics</td></tr>
+              <tr data-kw="stats describe summary"><td>s.describe()</td><td class="muted">Series</td><td class="muted" style="color:var(--green)">stats</td><td class="muted">full summary statistics</td></tr>
+              <tr data-kw="std var std deviation"><td>s.std() / s.var()</td><td class="muted">float</td><td class="muted" style="color:var(--green)">stats</td><td class="muted">spread measurement</td></tr>
+              <tr data-kw="skew kurt distribution"><td>s.skew() / s.kurt()</td><td class="muted">float</td><td class="muted" style="color:var(--green)">stats</td><td class="muted">distribution shape</td></tr>
+              <tr data-kw="quantile percentile"><td>s.quantile(0.25)</td><td class="muted">float</td><td class="muted" style="color:var(--green)">stats</td><td class="muted">percentile values</td></tr>
+              <tr data-kw="value count frequency"><td>s.value_counts()</td><td class="muted">Series</td><td class="muted" style="color:var(--purple)">frequency</td><td class="muted">frequency table</td></tr>
+              <tr data-kw="unique nunique distinct"><td>s.unique() / s.nunique()</td><td class="muted">array / int</td><td class="muted" style="color:var(--purple)">frequency</td><td class="muted">distinct values</td></tr>
+              <tr data-kw="mode most common frequent"><td>s.mode()</td><td class="muted">Series</td><td class="muted" style="color:var(--purple)">frequency</td><td class="muted">most common value(s)</td></tr>
+              <tr data-kw="sort values ascending"><td>s.sort_values()</td><td class="muted">Series</td><td class="muted" style="color:var(--teal)">sort</td><td class="muted">sort by value</td></tr>
+              <tr data-kw="sort index label"><td>s.sort_index()</td><td class="muted">Series</td><td class="muted" style="color:var(--teal)">sort</td><td class="muted">sort by index label</td></tr>
+              <tr data-kw="nlargest nsmallest top bottom"><td>s.nlargest(n)</td><td class="muted">Series</td><td class="muted" style="color:var(--teal)">sort</td><td class="muted">top N values (fast)</td></tr>
+              <tr data-kw="string str upper lower case"><td>s.str.upper()</td><td class="muted">Series</td><td class="muted" style="color:var(--pink)">strings</td><td class="muted">vectorized string ops</td></tr>
+              <tr data-kw="string contains search regex"><td>s.str.contains()</td><td class="muted">bool Series</td><td class="muted" style="color:var(--pink)">strings</td><td class="muted">string/regex search</td></tr>
+              <tr data-kw="string split extract parse"><td>s.str.split() / .extract()</td><td class="muted">Series/DF</td><td class="muted" style="color:var(--pink)">strings</td><td class="muted">split or regex extract</td></tr>
+              <tr data-kw="datetime dt year month day"><td>s.dt.year / s.dt.month</td><td class="muted">Series</td><td class="muted" style="color:var(--amber)">datetime</td><td class="muted">datetime extraction</td></tr>
+              <tr data-kw="datetime format strftime"><td>s.dt.strftime(fmt)</td><td class="muted">Series</td><td class="muted" style="color:var(--amber)">datetime</td><td class="muted">format datetime as string</td></tr>
+              <tr data-kw="rolling window moving average"><td>s.rolling(n).mean()</td><td class="muted">Series</td><td class="muted" style="color:var(--coral)">rolling</td><td class="muted">moving average/stats</td></tr>
+              <tr data-kw="expanding growing window cumulative"><td>s.expanding().mean()</td><td class="muted">Series</td><td class="muted" style="color:var(--coral)">rolling</td><td class="muted">growing window stats</td></tr>
+              <tr data-kw="cumulative sum cumsum cumprod"><td>s.cumsum() / s.cumprod()</td><td class="muted">Series</td><td class="muted" style="color:var(--coral)">cumulative</td><td class="muted">running total/product</td></tr>
+              <tr data-kw="rank percentile position"><td>s.rank()</td><td class="muted">Series</td><td class="muted" style="color:var(--coral)">rank</td><td class="muted">rank each value</td></tr>
+              <tr data-kw="shift lag previous next"><td>s.shift(1)</td><td class="muted">Series</td><td class="muted" style="color:var(--pink)">shift</td><td class="muted">lag/lead values</td></tr>
+              <tr data-kw="diff difference period change"><td>s.diff() / s.pct_change()</td><td class="muted">Series</td><td class="muted" style="color:var(--pink)">shift</td><td class="muted">period change / returns</td></tr>
+              <tr data-kw="between filter range"><td>s.between(lo, hi)</td><td class="muted">bool Series</td><td class="muted" style="color:var(--teal)">filter</td><td class="muted">range filter</td></tr>
+              <tr data-kw="isin match exact set"><td>s.isin([...])</td><td class="muted">bool Series</td><td class="muted" style="color:var(--teal)">filter</td><td class="muted">set membership test</td></tr>
+              <tr data-kw="clip clamp limit bound"><td>s.clip(lower, upper)</td><td class="muted">Series</td><td class="muted" style="color:var(--teal)">filter</td><td class="muted">clamp to range</td></tr>
+              <tr data-kw="where conditional mask nan"><td>s.where(cond)</td><td class="muted">Series</td><td class="muted" style="color:var(--teal)">filter</td><td class="muted">keep where True, else NaN</td></tr>
+              <tr data-kw="map transform lookup dict"><td>s.map(dict/fn)</td><td class="muted">Series</td><td class="muted" style="color:var(--amber)">transform</td><td class="muted">element lookup/transform</td></tr>
+              <tr data-kw="replace swap fix value"><td>s.replace(old, new)</td><td class="muted">Series</td><td class="muted" style="color:var(--amber)">transform</td><td class="muted">swap specific values</td></tr>
+              <tr data-kw="apply function custom lambda"><td>s.apply(fn)</td><td class="muted">Series</td><td class="muted" style="color:var(--amber)">transform</td><td class="muted">custom function per element</td></tr>
+              <tr data-kw="duplicate dedup remove drop"><td>s.drop_duplicates()</td><td class="muted">Series</td><td class="muted" style="color:var(--red)">dedup</td><td class="muted">remove duplicate values</td></tr>
+              <tr data-kw="index reset rename reindex"><td>s.reset_index()</td><td class="muted">DataFrame</td><td class="muted" style="color:var(--purple)">index</td><td class="muted">reset to 0,1,2…</td></tr>
+              <tr data-kw="reindex align fill new index"><td>s.reindex([...])</td><td class="muted">Series</td><td class="muted" style="color:var(--purple)">index</td><td class="muted">conform to new index</td></tr>
+              <tr data-kw="concat combine stack join"><td>pd.concat([s1, s2])</td><td class="muted">Series</td><td class="muted" style="color:var(--blue)">combine</td><td class="muted">stack or join series</td></tr>
+              <tr data-kw="combine first fill merge partial"><td>s1.combine_first(s2)</td><td class="muted">Series</td><td class="muted" style="color:var(--blue)">combine</td><td class="muted">fill NaN from another Series</td></tr>
+              <tr data-kw="convert type astype cast"><td>s.astype(dtype)</td><td class="muted">Series</td><td class="muted" style="color:var(--coral)">convert</td><td class="muted">change data type</td></tr>
+              <tr data-kw="export list dict frame json"><td>s.to_list() / to_frame()</td><td class="muted">list/DF</td><td class="muted" style="color:var(--coral)">export</td><td class="muted">convert to Python/pandas</td></tr>
+            </table>
+          </div>
+          <div id="no-results" style="text-align:center;padding:24px;font-family:var(--mono);font-size:12px;color:var(--hint)">No methods found for that query</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">pandas · series · complete reference · 20 sections · 50+ methods</div>
+
+</div>
+
+<!-- SCROLL TO TOP -->
+<div id="scrolltop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</div>
+
+<script>
+  function goTo(id) {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function showProp(name, val, desc) {
+    const r = document.getElementById('prop-result');
+    r.innerHTML = '<span style="color:var(--teal)">s.' + name + '</span> <span style="color:var(--hint)">→</span> <span style="color:var(--amber);font-weight:600">' + val + '</span><br><span style="color:var(--muted);font-size:10px">' + desc + '</span>';
+    r.style.borderColor = 'var(--teal-dim)';
+    setTimeout(() => r.style.borderColor = 'var(--border)', 1500);
+  }
+
+  function updateFilter(v) {
+    document.getElementById('thresh-val').textContent = v;
+    const chips = document.querySelectorAll('.fv-chip');
+    const visible = [];
+    chips.forEach(c => {
+      const val = parseInt(c.dataset.val);
+      if (val > parseInt(v)) { c.classList.remove('hidden'); visible.push(c.textContent); }
+      else c.classList.add('hidden');
+    });
+    document.getElementById('filter-note').textContent =
+      'showing values > ' + v + ': ' + (visible.length ? visible.join(', ') : 'none');
+  }
+
+  function updateMath(v) {
+    document.getElementById('mult-val').textContent = v + '×';
+    document.getElementById('math-title').textContent = 's × ' + v + ' = [' + (10*v) + ', ' + (20*v) + ', ' + (30*v) + ']';
+    const vals = [10, 20, 30];
+    const max = 30 * v;
+    ['a','b','c'].forEach((l, i) => {
+      const res = vals[i] * v;
+      const pct = Math.round(res / max * 100);
+      document.getElementById('b' + l).style.width = pct + '%';
+      document.getElementById('v' + l).textContent = res;
+    });
+  }
+
+  function filterRef(q) {
+    const rows = document.querySelectorAll('#ref-table tr[data-kw]');
+    const kw = q.toLowerCase().trim();
+    let found = 0;
+    rows.forEach(r => {
+      const text = (r.textContent + ' ' + r.dataset.kw).toLowerCase();
+      const show = !kw || text.includes(kw);
+      r.style.display = show ? '' : 'none';
+      if (show) found++;
+    });
+    document.getElementById('no-results').style.display = found ? 'none' : 'block';
+  }
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.06 });
+
+  document.querySelectorAll('.section').forEach((el, i) => {
+    el.style.animationDelay = (i * 0.04) + 's';
+    observer.observe(el);
+  });
+
+  window.addEventListener('scroll', () => {
+    const btn = document.getElementById('scrolltop');
+    btn.classList.toggle('visible', window.scrollY > 400);
+  });
+</script>
+</body>
+</html>
